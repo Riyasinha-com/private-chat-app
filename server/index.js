@@ -3,6 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,9 @@ const io = new Server(server, {
     origin: "*", // we'll restrict this later for security
   }
 });
+
+// Middleware to understand JSON data sent from frontend
+app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -21,6 +25,9 @@ mongoose.connect(process.env.MONGO_URI)
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });
+
+// Auth routes (signup/login)
+app.use('/api/auth', authRoutes);
 
 // Handle new connections
 io.on('connection', (socket) => {
