@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
@@ -9,6 +11,11 @@ const io = new Server(server, {
     origin: "*", // we'll restrict this later for security
   }
 });
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB successfully!'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Basic test route
 app.get('/', (req, res) => {
