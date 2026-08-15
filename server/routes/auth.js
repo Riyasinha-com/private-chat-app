@@ -89,4 +89,22 @@ router.get('/publickey/:username', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+// GET conversation history between two users
+router.get('/messages/:user1/:user2', async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    const { user1, user2 } = req.params;
+
+    const messages = await Message.find({
+      $or: [
+        { from: user1, to: user2 },
+        { from: user2, to: user1 },
+      ],
+    }).sort({ createdAt: 1 });
+
+    res.status(200).json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 module.exports = router;

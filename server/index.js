@@ -39,7 +39,15 @@ io.on('connection', (socket) => {
     console.log(`${username} is online (${socket.id})`);
   });
 
-  socket.on('sendPrivateMessage', ({ to, from, encryptedMessage, nonce }) => {
+  socket.on('sendPrivateMessage', async ({ to, from, encryptedMessage, nonce }) => {
+    // Save the encrypted message to the database
+    try {
+      const Message = require('./models/Message');
+      await Message.create({ from, to, encryptedMessage, nonce });
+    } catch (err) {
+      console.error('Error saving message:', err);
+    }
+
     const recipientSocketId = onlineUsers[to];
     if (recipientSocketId) {
       io.to(recipientSocketId).emit('receivePrivateMessage', { from, encryptedMessage, nonce });
