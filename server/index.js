@@ -10,11 +10,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: ["https://private-chat-app-ten.vercel.app", "http://localhost:5173", "http://localhost:5174"],
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://private-chat-app-ten.vercel.app", "http://localhost:5173", "http://localhost:5174"],
+}));
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI)
