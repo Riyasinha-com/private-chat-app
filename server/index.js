@@ -30,19 +30,37 @@ app.get('/', (req, res) => {
 // Auth routes (signup/login)
 app.use('/api/auth', authRoutes);
 
-// Handle new connections
+// Track which username belongs to which socket connection
+const onlineUsers = {};
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('sendMessage', (message) => {
-    console.log('Message received:', message);
-    io.emit('receiveMessage', message); // send to everyone, including sender
+  // When a user logs in on the frontend, they announce themselves here
+  socket.on('registerUser', (username) => {
+    onlineUsers[username] = socket.id;
+    console.log(`${username} is online (${socket.id})`);
+  });
+
+  // Handle a private, already-encrypted message
+  socket.on('sendPrivateMessage', ({ to, from, encryptedMessage, nonce }) => {
+    const recipientSocketId = onlineUsers[to];
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit('receivePrivateMessage', { from, encryptedMessage, nonce });
+    }
+    // Also send it back to the sender so their own chat window updates
+    socket.emit('receivePrivateMessage', { from, encryptedMessage, nonce, self: true });
   });
 
   socket.on('disconnect', () => {
+    // Remove this user from the online list
+    for (const [username, id] of Object.entries(onlineUsers)) {
+      if (id === socket.id) delete onlineUsers[username];
+    }
     console.log('User disconnected:', socket.id);
   });
 });
+
 
 const PORT = 5000;
 server.listen(PORT, () => {

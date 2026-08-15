@@ -15,7 +15,7 @@ function Login() {
       const res = await axios.post('http://localhost:5000/api/auth/login', { username, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('username', res.data.username);
-      navigate('/chat');
+      navigate('/chats');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     }

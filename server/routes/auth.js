@@ -8,7 +8,7 @@ const router = express.Router();
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, publicKey } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ username });
@@ -19,8 +19,8 @@ router.post('/signup', async (req, res) => {
     // Encrypt the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create and save the new user
-    const newUser = new User({ username, password: hashedPassword });
+    // Create and save the new user (including their public key)
+    const newUser = new User({ username, password: hashedPassword, publicKey });
     await newUser.save();
 
     res.status(201).json({ message: 'User created successfully' });
@@ -55,4 +55,38 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET a user's public key by username
+router.get('/publickey/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ publicKey: user.publicKey });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// GET all usernames (excluding yourself) - to pick who to chat with
+router.get('/users/:excludeUsername', async (req, res) => {
+  try {
+    const users = await User.find({ username: { $ne: req.params.excludeUsername } }, 'username');
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+// GET a user's public key by username
+router.get('/publickey/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ publicKey: user.publicKey });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 module.exports = router;

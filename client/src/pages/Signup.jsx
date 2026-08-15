@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import nacl from 'tweetnacl';
+import { encodeBase64 } from 'tweetnacl-util';
 
 function Signup() {
   const [username, setUsername] = useState('');
@@ -12,7 +14,21 @@ function Signup() {
     e.preventDefault();
     setError('');
     try {
-      await axios.post('http://localhost:5000/api/auth/signup', { username, password });
+      // Generate a public/private key pair for encryption
+      const keyPair = nacl.box.keyPair();
+      const publicKey = encodeBase64(keyPair.publicKey);
+      const privateKey = encodeBase64(keyPair.secretKey);
+
+      // Send username, password, and PUBLIC key to server
+      await axios.post('http://localhost:5000/api/auth/signup', {
+        username,
+        password,
+        publicKey,
+      });
+
+      // Save the PRIVATE key only in this browser (never sent to server)
+      localStorage.setItem(`privateKey_${username}`, privateKey);
+
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
