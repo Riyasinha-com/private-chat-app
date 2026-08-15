@@ -7,15 +7,17 @@ import SnowBackground from './components/SnowBackground';
 import './App.css';
 
 function App() {
+  const isLoggedIn = !!localStorage.getItem('token');
+
   return (
     <BrowserRouter>
       <SnowBackground />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/chats" /> : <Login />} />
+        <Route path="/signup" element={isLoggedIn ? <Navigate to="/chats" /> : <Signup />} />
         <Route path="/chats" element={<UserList />} />
         <Route path="/chat/:recipientUsername" element={<Chat />} />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to={isLoggedIn ? "/chats" : "/login"} />} />
       </Routes>
     </BrowserRouter>
   );
