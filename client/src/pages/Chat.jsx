@@ -4,14 +4,15 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+import { API_URL } from '../config';
 
-const socket = io('http://localhost:5000');
+const socket = io(API_URL);
 
 function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [recipientPublicKey, setRecipientPublicKey] = useState(null);
-  const [callStatus, setCallStatus] = useState('idle'); // idle, calling, incoming, active
+  const [callStatus, setCallStatus] = useState('idle');
   const [incomingOffer, setIncomingOffer] = useState(null);
 
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ function Chat() {
       registeredRef.current = true;
     }
 
-    axios.get(`http://localhost:5000/api/auth/publickey/${recipientUsername}`)
+    axios.get(`${API_URL}/api/auth/publickey/${recipientUsername}`)
       .then((res) => setRecipientPublicKey(res.data.publicKey))
       .catch((err) => console.error(err));
 
@@ -53,7 +54,6 @@ function Chat() {
 
     socket.on('receivePrivateMessage', handleIncoming);
 
-    // ---- Call event listeners ----
     socket.on('incomingCall', ({ from, offer }) => {
       if (from !== recipientUsername) return;
       setIncomingOffer(offer);
@@ -126,7 +126,6 @@ function Chat() {
     navigate('/login');
   };
 
-  // ---- WebRTC helper: create a peer connection ----
   const createPeerConnection = () => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -147,7 +146,6 @@ function Chat() {
     return pc;
   };
 
-  // ---- Start a call ----
   const startCall = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -169,7 +167,6 @@ function Chat() {
     }
   };
 
-  // ---- Accept an incoming call ----
   const acceptCall = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import nacl from 'tweetnacl';
 import { encodeBase64 } from 'tweetnacl-util';
+import { API_URL } from '../config';
 
 function Signup() {
   const [username, setUsername] = useState('');
@@ -14,19 +15,16 @@ function Signup() {
     e.preventDefault();
     setError('');
     try {
-      // Generate a public/private key pair for encryption
       const keyPair = nacl.box.keyPair();
       const publicKey = encodeBase64(keyPair.publicKey);
       const privateKey = encodeBase64(keyPair.secretKey);
 
-      // Send username, password, and PUBLIC key to server
-      await axios.post('http://localhost:5000/api/auth/signup', {
+      await axios.post(`${API_URL}/api/auth/signup`, {
         username,
         password,
         publicKey,
       });
 
-      // Save the PRIVATE key only in this browser (never sent to server)
       localStorage.setItem(`privateKey_${username}`, privateKey);
 
       navigate('/login');
@@ -36,28 +34,34 @@ function Signup() {
   };
 
   return (
-    <div className="auth-container">
-      <h1>Sign Up</h1>
-      <form onSubmit={handleSignup}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {error && <p className="error-text">{error}</p>}
-        <button type="submit">Sign Up</button>
-      </form>
-      <p>Already have an account? <Link to="/login">Login</Link></p>
-    </div>
+    <>
+      <div className="brand-header">
+        <h2>❄ Frostline</h2>
+        <p>Private messages, wrapped in silence</p>
+      </div>
+      <div className="auth-container">
+        <h1>Sign Up</h1>
+        <form onSubmit={handleSignup}>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {error && <p className="error-text">{error}</p>}
+          <button type="submit">Sign Up</button>
+        </form>
+        <p>Already have an account? <Link to="/login">Login</Link></p>
+      </div>
+    </>
   );
 }
 

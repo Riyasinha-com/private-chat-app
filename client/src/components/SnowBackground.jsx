@@ -1,9 +1,13 @@
 function SnowBackground() {
-  const snowflakes = Array.from({ length: 40 }, (_, i) => i);
-  const sparkles = Array.from({ length: 25 }, (_, i) => i);
+  const snowflakes = Array.from({ length: 70 }, (_, i) => i);
+  const sparkles = Array.from({ length: 35 }, (_, i) => i);
 
   return (
     <div className="winter-bg">
+      <div className="aurora-glow aurora-1" />
+      <div className="aurora-glow aurora-2" />
+      <div className="moon" />
+
       {snowflakes.map((i) => (
         <span
           key={`snow-${i}`}
@@ -12,9 +16,9 @@ function SnowBackground() {
             left: `${Math.random() * 100}%`,
             animationDuration: `${8 + Math.random() * 12}s`,
             animationDelay: `${Math.random() * 10}s`,
-            width: `${2 + Math.random() * 4}px`,
-            height: `${2 + Math.random() * 4}px`,
-            opacity: 0.3 + Math.random() * 0.5,
+            width: `${2 + Math.random() * 5}px`,
+            height: `${2 + Math.random() * 5}px`,
+            opacity: 0.3 + Math.random() * 0.6,
           }}
         />
       ))}
