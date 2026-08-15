@@ -3,11 +3,13 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import UserList from './pages/UserList';
 import Chat from './pages/Chat';
+import SnowBackground from './components/SnowBackground';
 import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
+      <SnowBackground />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
