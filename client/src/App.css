@@ -118,3 +118,46 @@
   color: white;
   cursor: pointer;
 }
+.call-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background-color: #25d366;
+  color: white;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.call-btn:hover {
+  background-color: #1ebc59;
+}
+
+.end-call-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background-color: #e74c3c;
+  color: white;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.end-call-btn:hover {
+  background-color: #c0392b;
+}
+
+.call-status {
+  text-align: center;
+  color: #555;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.incoming-call-box {
+  text-align: center;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
