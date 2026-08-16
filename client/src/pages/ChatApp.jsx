@@ -16,6 +16,13 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function Avatar({ name, picture, small }) {
+  if (picture) {
+    return <img src={picture} alt={name} className={`avatar-img ${small ? 'small' : ''}`} />;
+  }
+  return <div className={`avatar ${small ? 'small' : ''}`}>{getInitials(name)}</div>;
+}
+
 function ChatApp() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -24,6 +31,8 @@ function ChatApp() {
   const [callStatus, setCallStatus] = useState('idle');
   const [incomingOffer, setIncomingOffer] = useState(null);
   const [incomingFrom, setIncomingFrom] = useState(null);
+  const [myProfilePic, setMyProfilePic] = useState('');
+  const [unreadFrom, setUnreadFrom] = useState({});
 
   const navigate = useNavigate();
   const username = localStorage.getItem('username');
@@ -31,6 +40,7 @@ function ChatApp() {
   const registeredRef = useRef(false);
   const selectedUserRef = useRef(null);
   const recipientPublicKeyRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -52,6 +62,10 @@ function ChatApp() {
       .then((res) => setUsers(res.data))
       .catch((err) => console.error(err));
 
+    axios.get(`${API_URL}/api/auth/profile/${username}`)
+      .then((res) => setMyProfilePic(res.data.profilePicture || ''))
+      .catch((err) => console.error(err));
+
     const decryptMessage = (encryptedMessage, nonce, senderPublicKey, myPrivKey) => {
       const decrypted = nacl.box.open(
         decodeBase64(encryptedMessage),
@@ -64,9 +78,24 @@ function ChatApp() {
 
     const handleIncoming = ({ from, encryptedMessage, nonce, self, createdAt }) => {
       const current = selectedUserRef.current;
-      if (!current) return;
-      if (from !== current.username && !self) return;
-      if (self && from !== username) return;
+
+      if (self && from === username) {
+        if (!current) return;
+        try {
+          const decrypted = decryptMessage(encryptedMessage, nonce, recipientPublicKeyRef.current, myPrivateKey);
+          setMessages((prev) => [...prev, { from, text: decrypted, time: createdAt || new Date() }]);
+        } catch (err) {
+          console.error('Decryption failed:', err);
+        }
+        return;
+      }
+
+      if (!current || from !== current.username) {
+        // Message from someone we're not currently viewing — mark unread
+        setUnreadFrom((prev) => ({ ...prev, [from]: true }));
+        return;
+      }
+
       try {
         const decrypted = decryptMessage(encryptedMessage, nonce, recipientPublicKeyRef.current, myPrivateKey);
         setMessages((prev) => [...prev, { from, text: decrypted, time: createdAt || new Date() }]);
@@ -119,6 +148,7 @@ function ChatApp() {
     setSelectedUser(user);
     selectedUserRef.current = user;
     setMessages([]);
+    setUnreadFrom((prev) => ({ ...prev, [user.username]: false }));
 
     try {
       const res = await axios.get(`${API_URL}/api/auth/publickey/${user.username}`);
@@ -175,6 +205,36 @@ function ChatApp() {
     navigate('/login');
   };
 
+  const handlePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      alert('Please choose an image smaller than 1MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      try {
+        await axios.post(`${API_URL}/api/auth/profile-picture`, {
+          username,
+          profilePicture: base64Image,
+        });
+        setMyProfilePic(base64Image);
+      } catch (err) {
+        console.error(err);
+        alert('Could not upload picture.');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const createPeerConnection = (toUsername) => {
     const pc = new RTCPeerConnection({
       iceServers: [
@@ -191,7 +251,7 @@ function ChatApp() {
       }
     };
 
-   pc.ontrack = (event) => {
+    pc.ontrack = (event) => {
       console.log('Received remote track:', event.streams[0]);
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = event.streams[0];
@@ -274,6 +334,16 @@ function ChatApp() {
     <div className="app-shell">
       <div className={`sidebar ${selectedUser ? 'hide-on-mobile' : ''}`}>
         <div className="sidebar-header">
+          <div className="my-profile" onClick={handlePictureClick} title="Change profile picture">
+            <Avatar name={username} picture={myProfilePic} small />
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handlePictureChange}
+          />
           <div className="brand-mini">❄ Frostline</div>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
@@ -285,8 +355,9 @@ function ChatApp() {
               className={`user-row ${selectedUser?.username === u.username ? 'active' : ''}`}
               onClick={() => openChat(u)}
             >
-              <div className="avatar">{getInitials(u.username)}</div>
+              <Avatar name={u.username} picture={u.profilePicture} />
               <div className="user-row-name">{u.username}</div>
+              {unreadFrom[u.username] && <div className="unread-dot" />}
             </div>
           ))}
         </div>
@@ -303,7 +374,7 @@ function ChatApp() {
           <>
             <div className="main-header">
               <button className="back-btn" onClick={backToList}>←</button>
-              <div className="avatar small">{getInitials(selectedUser.username)}</div>
+              <Avatar name={selectedUser.username} picture={selectedUser.profilePicture} small />
               <div className="main-header-name">{selectedUser.username}</div>
               <div className="main-header-actions">
                 {callStatus === 'idle' && <button onClick={startCall} className="call-btn">📞</button>}

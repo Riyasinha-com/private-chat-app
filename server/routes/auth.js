@@ -10,6 +10,12 @@ router.post('/signup', async (req, res) => {
   try {
     const { username, password, publicKey } = req.body;
 
+    // Enforce strong password
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json({ message: 'Password must be 8+ characters, with uppercase, lowercase, a number, and a special character.' });
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
@@ -71,7 +77,7 @@ router.get('/publickey/:username', async (req, res) => {
 // GET all usernames (excluding yourself) - to pick who to chat with
 router.get('/users/:excludeUsername', async (req, res) => {
   try {
-    const users = await User.find({ username: { $ne: req.params.excludeUsername } }, 'username');
+    const users = await User.find({ username: { $ne: req.params.excludeUsername } }, 'username profilePicture');
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -107,4 +113,34 @@ router.get('/messages/:user1/:user2', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+// UPDATE profile picture (stored as base64 string)
+router.post('/profile-picture', async (req, res) => {
+  try {
+    const { username, profilePicture } = req.body;
+    const user = await User.findOneAndUpdate(
+      { username },
+      { profilePicture },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ message: 'Profile picture updated', profilePicture: user.profilePicture });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+// GET a user's own profile info (username + profile picture)
+router.get('/profile/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }, 'username profilePicture');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;

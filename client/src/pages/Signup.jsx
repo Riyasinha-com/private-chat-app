@@ -11,9 +11,24 @@ function Signup() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const isPasswordStrong = (pwd) => {
+    const minLength = pwd.length >= 8;
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+    return minLength && hasUpper && hasLower && hasNumber && hasSpecial;
+  };
+
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!isPasswordStrong(password)) {
+      setError('Password must be 8+ characters, with uppercase, lowercase, a number, and a special character.');
+      return;
+    }
+
     try {
       const keyPair = nacl.box.keyPair();
       const publicKey = encodeBase64(keyPair.publicKey);
@@ -49,14 +64,15 @@ function Signup() {
             onChange={(e) => setUsername(e.target.value)}
             required
           />
-          <input
+         <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <p className="error-text">{error}</p>}
+          <p className="password-hint">8+ characters, with uppercase, lowercase, number & symbol</p>
+          {error && <p className="error-text">{error}</p>} 
           <button type="submit">Sign Up</button>
         </form>
         <p>Already have an account? <Link to="/login">Login</Link></p>
