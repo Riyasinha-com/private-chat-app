@@ -1,8 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import UserList from './pages/UserList';
-import Chat from './pages/Chat';
+import ChatApp from './pages/ChatApp';
 import SnowBackground from './components/SnowBackground';
 import './App.css';
 
@@ -15,8 +14,7 @@ function App() {
       <Routes>
         <Route path="/login" element={isLoggedIn ? <Navigate to="/chats" /> : <Login />} />
         <Route path="/signup" element={isLoggedIn ? <Navigate to="/chats" /> : <Signup />} />
-        <Route path="/chats" element={<UserList />} />
-        <Route path="/chat/:recipientUsername" element={<Chat />} />
+        <Route path="/chats" element={<ChatApp />} />
         <Route path="*" element={<Navigate to={isLoggedIn ? "/chats" : "/login"} />} />
       </Routes>
     </BrowserRouter>
