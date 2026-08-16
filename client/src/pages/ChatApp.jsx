@@ -191,11 +191,20 @@ function ChatApp() {
       }
     };
 
-    pc.ontrack = (event) => {
+   pc.ontrack = (event) => {
+      console.log('Received remote track:', event.streams[0]);
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = event.streams[0];
-        remoteAudioRef.current.play().catch(() => {});
+        remoteAudioRef.current.play().catch((err) => console.error('Play failed:', err));
       }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState);
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState);
     };
 
     return pc;
